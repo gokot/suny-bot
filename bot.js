@@ -7,7 +7,7 @@ const ADMINS = ['gokot', 'Pullpy'];
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
-// ПРИВИЛЕГИИ (ОТСОРТИРОВАНЫ ПО ВОЗРАСТАНИЮ ЦЕНЫ)
+// ПРИВИЛЕГИИ 
 const PRICES = { 
     'PEGAS': 50,
     'GOD': 100,
