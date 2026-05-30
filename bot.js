@@ -7,7 +7,14 @@ const ADMINS = ['gokot', 'Pullpy'];
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
-const PRICES = { 'ГРИФЕР': 149, 'ДРАКОН': 450, 'ИМПЕРАТОР': 990 };
+// НОВЫЕ ПРИВИЛЕГИИ (старые удалены)
+const PRICES = { 
+    'MODER': 350, 
+    'ADMIN': 600, 
+    'MONSTER': 500, 
+    'PASXA': 700 
+};
+
 const payments = {};
 
 // Хранилище chatId админов
@@ -61,13 +68,14 @@ bot.onText(/\/start/, (msg) => {
     
     bot.sendMessage(chatId,
         `🎮 **Добро пожаловать в магазин SunyWorld!**\n\n` +
-        `💰 **Привилегии:**\n` +
-        `• 👑 ГРИФЕР — 149₽ (99⭐)\n` +
-        `• 🐉 ДРАКОН — 450₽ (300⭐)\n` +
-        `• 👸 ИМПЕРАТОР — 990₽ (660⭐)\n\n` +
+        `💰 **ПРИВИЛЕГИИ:**\n` +
+        `• 🛡️ MODER — 350₽\n` +
+        `• 👑 ADMIN — 600₽\n` +
+        `• 👹 MONSTER — 500₽\n` +
+        `• 🐣 PASXA — 700₽\n\n` +
         `📝 **Как купить:**\n` +
         `/buy [привилегия] [ник]\n` +
-        `Пример: /buy ГРИФЕР Gamer228\n\n` +
+        `Пример: /buy MODER Gamer228\n\n` +
         `👑 **Администраторы:**\n` +
         `• [@gokot](https://t.me/gokot)\n` +
         `• [@Pullpy](https://t.me/Pullpy)`,
@@ -82,7 +90,7 @@ bot.onText(/\/buy (\S+) (\S+)/, async (msg, match) => {
     const nickname = match[2];
     
     if (!PRICES[privilege]) {
-        bot.sendMessage(chatId, '❌ Нет такой привилегии! Доступно: ГРИФЕР, ДРАКОН, ИМПЕРАТОР');
+        bot.sendMessage(chatId, '❌ Нет такой привилегии! Доступно: MODER, ADMIN, MONSTER, PASXA');
         return;
     }
     
@@ -138,10 +146,7 @@ bot.onText(/\/check (\S+)/, async (msg, match) => {
     if (p.status === 'completed') {
         bot.sendMessage(chatId,
             `✅ **Привилегия ${p.privilege} уже активирована** для *${p.nickname}*!\n\n` +
-            `🎮 Заходите на сервер \`mc.sunyworld.me\` и используйте команды!\n` +
-            `✨ /kit — набор ресурсов\n` +
-            `🕊️ /fly — полёт\n` +
-            `💚 /heal — лечение`,
+            `🎮 Заходите на сервер \`mc.sunyworld.me\``,
             { parse_mode: 'Markdown' }
         );
         return;
@@ -204,14 +209,10 @@ bot.onText(/\/approve (\S+)/, async (msg, match) => {
         `👤 **Игрок:** *${p.nickname}*\n` +
         `💰 **Сумма:** ${p.rubPrice} ₽\n\n` +
         `⏳ **Донат будет выдан в течении дня!**\n\n` +
-        `✨ Обычно это занимает **15-30 минут**.\n` +
-        `🕐 Если прошло больше времени — не переживайте, администратор скоро обработает ваш заказ.\n\n` +
-        `❓ **Вопросы или задержка?**\n` +
-        `📢 Напишите администратору: @gokot\n\n` +
-        `🎮 **А пока можете зайти на сервер:**\n` +
-        `└ \`mc.sunyworld.me\`\n\n` +
-        `❤️ **Спасибо за поддержку SunyWorld!**\n` +
-        `Приятной игры! 🎮✨`;
+        `✨ Обычно это занимает **15-30 минут**.\n\n` +
+        `❓ **Вопросы?** Напишите: @gokot\n\n` +
+        `🎮 **Сервер:** \`mc.sunyworld.me\`\n\n` +
+        `❤️ **Спасибо за поддержку SunyWorld!**`;
     
     try {
         await bot.sendMessage(p.chatId, buyerMessage, { parse_mode: 'Markdown' });
@@ -257,9 +258,8 @@ bot.onText(/\/cancel (\S+)/, async (msg, match) => {
     try {
         await bot.sendMessage(p.chatId,
             `❌ **ЗАКАЗ ОТМЕНЁН**\n\n` +
-            `😞 К сожалению, ваш заказ на привилегию *${p.privilege}* для *${p.nickname}* был отменён администратором.\n\n` +
-            `📢 По вопросам: [@gokot](https://t.me/gokot)\n\n` +
-            `🔄 Вы можете оформить новый заказ: /buy ${p.privilege} ${p.nickname}`,
+            `😞 Заказ на *${p.privilege}* для *${p.nickname}* отменён.\n\n` +
+            `📢 Вопросы: [@gokot](https://t.me/gokot)`,
             { parse_mode: 'Markdown', disable_web_page_preview: true }
         );
     } catch (err) {}
@@ -324,15 +324,17 @@ bot.onText(/\/shop/, (msg) => {
     const text = 
         `🛒 **МАГАЗИН SUNYWORLD**\n\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
-        `👑 **ГРИФЕР** — 149₽ (99⭐)\n` +
-        `   /fly, /heal, /kit grief\n\n` +
-        `🐉 **ДРАКОН** — 450₽ (300⭐)\n` +
-        `   /vanish, до 10 приватов\n\n` +
-        `👸 **ИМПЕРАТОР** — 990₽ (660⭐)\n` +
-        `   /god, неограниченные регионы\n\n` +
+        `🛡️ **MODER** — 350₽\n` +
+        `   /fly, /heal, /kit\n\n` +
+        `👑 **ADMIN** — 600₽\n` +
+        `   /vanish, /god, полный доступ\n\n` +
+        `👹 **MONSTER** — 500₽\n` +
+        `   /fly, /heal, особый набор\n\n` +
+        `🐣 **PASXA** — 700₽\n` +
+        `   Все возможности + уникальный префикс\n\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
         `📝 **Купить:** /buy [привилегия] [ник]\n` +
-        `Пример: /buy ГРИФЕР Gamer228`;
+        `Пример: /buy MODER Gamer228`;
     
     bot.sendMessage(msg.chat.id, text, { parse_mode: 'Markdown' });
 });
@@ -363,5 +365,4 @@ bot.onText(/\/help/, (msg) => {
 console.log('✅ БОТ SUNYWORLD ЗАПУЩЕН!');
 console.log(`👑 Администраторы: @${ADMINS.join(', @')}`);
 console.log('');
-console.log(`⚠️ ВАЖНО: Администраторы должны написать боту /start`);
-console.log(`   чтобы получать уведомления о заказах!`);
+console.log(`💰 НОВЫЕ ЦЕНЫ: MODER 350₽, ADMIN 600₽, MONSTER 500₽, PASXA 700₽`);
