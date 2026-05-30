@@ -7,7 +7,7 @@ const ADMINS = ['gokot', 'Pullpy'];
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
-// ПРИВИЛЕГИИ 
+// ПРИВИЛЕГИИ
 const PRICES = { 
     'PEGAS': 50,
     'GOD': 100,
@@ -71,7 +71,7 @@ bot.onText(/\/start/, (msg) => {
     
     bot.sendMessage(chatId,
         `🎮 **Добро пожаловать в магазин SunyWorld!**\n\n` +
-        `💰 **ПРИВИЛЕГИИ (по возрастанию цены):**\n` +
+        `💰 **ПРИВИЛЕГИИ:**\n` +
         `• 🦄 PEGAS — 50₽\n` +
         `• 👑 GOD — 100₽\n` +
         `• 🛡️ MODER — 350₽\n` +
@@ -382,5 +382,4 @@ bot.onText(/\/help/, (msg) => {
 console.log('✅ БОТ SUNYWORLD ЗАПУЩЕН!');
 console.log(`👑 Администраторы: @${ADMINS.join(', @')}`);
 console.log('');
-console.log(`💰 ПРИВИЛЕГИИ (по возрастанию цены):`);
-console.log(`   PEGAS 50₽, GOD 100₽, MODER 350₽, ML.MODER 400₽, MONSTER 500₽, ADMIN 600₽, PASXA 700₽`);
+console.log(`💰 ПРИВИЛЕГИИ: PEGAS 50₽, GOD 100₽, MODER 350₽, ML.MODER 400₽, MONSTER 500₽, ADMIN 600₽, PASXA 700₽`);
