@@ -7,20 +7,18 @@ const ADMINS = ['gokot', 'Pullpy'];
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
-// ПРИВИЛЕГИИ
+// ПРИВИЛЕГИИ (рубли и звёзды) - 1 Star ≈ 1.5 рубля
 const PRICES = { 
-    'PEGAS': 50,
-    'GOD': 100,
-    'MODER': 350,
-    'ML.MODER': 400,
-    'MONSTER': 500,
-    'ADMIN': 600,
-    'PASXA': 700
+    'PEGAS': { rub: 50, stars: 34 },
+    'GOD': { rub: 100, stars: 67 },
+    'MODER': { rub: 350, stars: 234 },
+    'ML.MODER': { rub: 400, stars: 267 },
+    'MONSTER': { rub: 500, stars: 334 },
+    'ADMIN': { rub: 600, stars: 400 },
+    'PASXA': { rub: 700, stars: 467 }
 };
 
 const payments = {};
-
-// Хранилище chatId админов
 const adminChatIds = {};
 
 // Функция отправки уведомлений админам
@@ -72,13 +70,13 @@ bot.onText(/\/start/, (msg) => {
     bot.sendMessage(chatId,
         `🎮 **Добро пожаловать в магазин SunyWorld!**\n\n` +
         `💰 **ПРИВИЛЕГИИ:**\n` +
-        `• 🦄 PEGAS — 50₽\n` +
-        `• 👑 GOD — 100₽\n` +
-        `• 🛡️ MODER — 350₽\n` +
-        `• 🤖 ML.MODER — 400₽\n` +
-        `• 👹 MONSTER — 500₽\n` +
-        `• ⚡ ADMIN — 600₽\n` +
-        `• 🐣 PASXA — 700₽\n\n` +
+        `• 🦄 PEGAS — 50₽ / 34⭐\n` +
+        `• 👑 GOD — 100₽ / 67⭐\n` +
+        `• 🛡️ MODER — 350₽ / 234⭐\n` +
+        `• 🤖 ML.MODER — 400₽ / 267⭐\n` +
+        `• 👹 MONSTER — 500₽ / 334⭐\n` +
+        `• ⚡ ADMIN — 600₽ / 400⭐\n` +
+        `• 🐣 PASXA — 700₽ / 467⭐\n\n` +
         `📝 **Как купить:**\n` +
         `/buy [привилегия] [ник]\n` +
         `Пример: /buy MODER Gamer228\n\n` +
@@ -89,13 +87,12 @@ bot.onText(/\/start/, (msg) => {
     );
 });
 
-// ПОКУПКА
+// ПОКУПКА - выбор способа оплаты
 bot.onText(/\/buy (\S+) (\S+)/, async (msg, match) => {
     const chatId = msg.chat.id;
     let privilege = match[1].toUpperCase();
     const nickname = match[2];
     
-    // Поддержка написания ML.MODER с точкой
     if (privilege === 'ML.MODER' || privilege === 'MLMODER') {
         privilege = 'ML.MODER';
     }
@@ -105,52 +102,162 @@ bot.onText(/\/buy (\S+) (\S+)/, async (msg, match) => {
         return;
     }
     
-    const amount = PRICES[privilege];
+    const rubPrice = PRICES[privilege].rub;
+    const starsPrice = PRICES[privilege].stars;
     const paymentId = crypto.randomBytes(4).toString('hex');
     
     payments[paymentId] = {
         chatId: chatId,
         nickname: nickname,
         privilege: privilege,
-        rubPrice: amount,
+        rubPrice: rubPrice,
+        starsPrice: starsPrice,
         status: 'pending',
         username: msg.from.username || 'нет',
         date: new Date().toLocaleString()
     };
     
-    const paymentUrl = `https://yoomoney.ru/transfer/quickpay?receiver=${YOOMONEY_WALLET}&quickpay-form=small&sum=${amount}&label=${paymentId}&targets=${encodeURIComponent(`${privilege} для ${nickname}`)}`;
+    const keyboard = {
+        inline_keyboard: [
+            [{ text: '💳 Оплатить рублями (ЮMoney)', callback_data: `rub_${paymentId}` }],
+            [{ text: '⭐ Оплатить Telegram Stars', callback_data: `stars_${paymentId}` }]
+        ]
+    };
     
     bot.sendMessage(chatId,
         `💎 **${privilege} для ${nickname}**\n\n` +
-        `💰 Сумма: ${amount} ₽\n\n` +
-        `📌 **Кошелёк ЮMoney:** \`4100 1195 4254 6884\`\n\n` +
-        `🔗 [ОПЛАТИТЬ ЧЕРЕЗ ЮMONEY](${paymentUrl})\n\n` +
-        `✅ **После оплаты отправьте:** /check ${paymentId}\n\n` +
-        `🆔 **Код платежа:** \`${paymentId}\``,
-        { parse_mode: 'Markdown', disable_web_page_preview: true }
-    );
-    
-    await notifyAdmins(
-        `🆕 **НОВЫЙ ЗАКАЗ!**\n\n` +
-        `🆔 Код: \`${paymentId}\`\n` +
-        `👤 Игрок: ${nickname}\n` +
-        `🎁 Привилегия: ${privilege}\n` +
-        `💰 Сумма: ${amount} ₽\n` +
-        `👤 Telegram: @${msg.from.username || 'нет'}\n` +
-        `⏰ Время: ${payments[paymentId].date}\n\n` +
-        `✅ Подтвердить: /approve ${paymentId}\n` +
-        `❌ Отменить: /cancel ${paymentId}`
+        `💰 Рубли: ${rubPrice} ₽\n` +
+        `⭐ Telegram Stars: ${starsPrice}\n\n` +
+        `⬇️ **Выберите способ оплаты:** ⬇️`,
+        { parse_mode: 'Markdown', reply_markup: keyboard }
     );
 });
 
-// ПРОВЕРКА ОПЛАТЫ
+// ОБРАБОТКА КНОПОК ВЫБОРА ОПЛАТЫ
+bot.on('callback_query', async (query) => {
+    const chatId = query.message.chat.id;
+    const data = query.data;
+    
+    if (data.startsWith('rub_')) {
+        const paymentId = data.replace('rub_', '');
+        const p = payments[paymentId];
+        
+        if (!p) {
+            bot.sendMessage(chatId, '❌ Платёж не найден');
+            return;
+        }
+        
+        const paymentUrl = `https://yoomoney.ru/transfer/quickpay?receiver=${YOOMONEY_WALLET}&quickpay-form=small&sum=${p.rubPrice}&label=${paymentId}&targets=${encodeURIComponent(`${p.privilege} для ${p.nickname}`)}`;
+        
+        bot.sendMessage(chatId,
+            `💳 **Оплата рублями**\n\n` +
+            `📌 **Кошелёк ЮMoney:** \`4100 1195 4254 6884\`\n` +
+            `💰 **Сумма:** ${p.rubPrice} ₽\n\n` +
+            `🔗 [ОПЛАТИТЬ](${paymentUrl})\n\n` +
+            `✅ После оплаты: /check ${paymentId}\n` +
+            `🆔 Код: \`${paymentId}\``,
+            { parse_mode: 'Markdown', disable_web_page_preview: true }
+        );
+        
+        await notifyAdmins(
+            `💳 **ОПЛАТА РУБЛЯМИ**\n\n` +
+            `🆔 Код: \`${paymentId}\`\n` +
+            `👤 Игрок: ${p.nickname}\n` +
+            `🎁 Привилегия: ${p.privilege}\n` +
+            `💰 Сумма: ${p.rubPrice} ₽\n\n` +
+            `✅ /approve ${paymentId}`
+        );
+        
+    } else if (data.startsWith('stars_')) {
+        const paymentId = data.replace('stars_', '');
+        const p = payments[paymentId];
+        
+        if (!p) {
+            bot.sendMessage(chatId, '❌ Платёж не найден');
+            return;
+        }
+        
+        // СОЗДАЁМ ИНВОЙС ДЛЯ TELEGRAM STARS
+        try {
+            const invoice = {
+                chat_id: chatId,
+                title: p.privilege,
+                description: `Привилегия "${p.privilege}" для игрока ${p.nickname} на SunyWorld`,
+                payload: JSON.stringify({ paymentId, nickname: p.nickname, privilege: p.privilege, starsAmount: p.starsPrice }),
+                provider_token: '',
+                currency: 'XTR',
+                prices: [{ label: p.privilege, amount: p.starsPrice }],
+                start_parameter: `buy_stars_${paymentId}`,
+                photo_url: 'https://cdn-icons-png.flaticon.com/512/2917/2917995.png',
+                photo_size: 512
+            };
+            
+            await bot.sendInvoice(chatId, invoice);
+            
+            await notifyAdmins(
+                `⭐ **ОПЛАТА STARS**\n\n` +
+                `🆔 Код: \`${paymentId}\`\n` +
+                `👤 Игрок: ${p.nickname}\n` +
+                `🎁 Привилегия: ${p.privilege}\n` +
+                `⭐ Сумма: ${p.starsPrice} Stars\n\n` +
+                `✅ После оплаты Stars привилегия выдастся автоматически!`
+            );
+            
+        } catch (err) {
+            console.error('Stars error:', err.message);
+            bot.sendMessage(chatId, 
+                `❌ **Оплата Telegram Stars временно недоступна**\n\n` +
+                `💡 Пожалуйста, выберите оплату рублями.\n\n` +
+                `👑 Администраторы: [@gokot](https://t.me/gokot), [@Pullpy](https://t.me/Pullpy)`,
+                { parse_mode: 'Markdown', disable_web_page_preview: true }
+            );
+        }
+    }
+    
+    await bot.answerCallbackQuery(query.id);
+});
+
+// ОБРАБОТКА УСПЕШНОЙ ОПЛАТЫ STARS
+bot.on('pre_checkout_query', (query) => {
+    bot.answerPreCheckoutQuery(query.id, true);
+});
+
+bot.on('successful_payment', async (msg) => {
+    const payload = JSON.parse(msg.successful_payment.invoice_payload);
+    const paymentId = payload.paymentId;
+    const p = payments[paymentId];
+    
+    if (p) {
+        p.status = 'completed';
+        
+        await bot.sendMessage(p.chatId,
+            `⭐ **ОПЛАТА STARS ПОДТВЕРЖДЕНА!**\n\n` +
+            `✅ **Привилегия *${p.privilege}* АКТИВИРОВАНА!**\n` +
+            `👤 Игрок: *${p.nickname}*\n` +
+            `⭐ Оплачено: ${p.starsPrice} Stars\n\n` +
+            `✨ Зайдите на сервер \`mc.sunyworld.me\`\n` +
+            `❤️ Спасибо за поддержку!`,
+            { parse_mode: 'Markdown' }
+        );
+        
+        await notifyAdmins(
+            `✅ **STARS ОПЛАЧЕН И ВЫДАН АВТОМАТИЧЕСКИ!**\n\n` +
+            `👤 Игрок: ${p.nickname}\n` +
+            `🎁 Привилегия: ${p.privilege}\n` +
+            `⭐ Сумма: ${p.starsPrice} Stars\n` +
+            `🆔 Код: ${paymentId}`
+        );
+    }
+});
+
+// ПРОВЕРКА ОПЛАТЫ (для рублей)
 bot.onText(/\/check (\S+)/, async (msg, match) => {
     const chatId = msg.chat.id;
     const paymentId = match[1];
     const p = payments[paymentId];
     
     if (!p) {
-        bot.sendMessage(chatId, '❌ **Платёж не найден**\n\nПроверьте правильность кода.', { parse_mode: 'Markdown' });
+        bot.sendMessage(chatId, '❌ **Платёж не найден**', { parse_mode: 'Markdown' });
         return;
     }
     
@@ -174,25 +281,22 @@ bot.onText(/\/check (\S+)/, async (msg, match) => {
     );
     
     await notifyAdmins(
-        `🟡 **ПРОВЕРКА ПЛАТЕЖА ПОКУПАТЕЛЕМ**\n\n` +
+        `🟡 **ПРОВЕРКА ПЛАТЕЖА**\n\n` +
         `🆔 Код: \`${paymentId}\`\n` +
         `👤 Игрок: ${p.nickname}\n` +
         `🎁 Привилегия: ${p.privilege}\n` +
-        `💰 Сумма: ${p.rubPrice} ₽\n` +
-        `👤 Telegram: @${msg.from.username || 'нет'}\n\n` +
-        `✅ Подтвердить: /approve ${paymentId}`
+        `💰 Сумма: ${p.rubPrice} ₽\n\n` +
+        `✅ /approve ${paymentId}`
     );
 });
 
-// /approve - ПОДТВЕРЖДЕНИЕ ОПЛАТЫ
+// /approve - ПОДТВЕРЖДЕНИЕ ОПЛАТЫ РУБЛЯМИ
 bot.onText(/\/approve (\S+)/, async (msg, match) => {
     const adminChatId = msg.chat.id;
     const adminUsername = msg.from.username;
     
-    console.log(`🔑 Команда /approve от @${adminUsername}`);
-    
     if (!adminUsername || !ADMINS.includes(adminUsername.toLowerCase())) {
-        bot.sendMessage(adminChatId, '❌ У вас нет прав на эту команду!');
+        bot.sendMessage(adminChatId, '❌ У вас нет прав!');
         return;
     }
     
@@ -200,48 +304,33 @@ bot.onText(/\/approve (\S+)/, async (msg, match) => {
     const p = payments[paymentId];
     
     if (!p) {
-        bot.sendMessage(adminChatId, `❌ Платёж с кодом ${paymentId} не найден!`);
+        bot.sendMessage(adminChatId, `❌ Платёж не найден!`);
         return;
     }
     
     if (p.status === 'completed') {
-        bot.sendMessage(adminChatId, `⚠️ Привилегия для ${p.nickname} уже была активирована!`);
+        bot.sendMessage(adminChatId, `⚠️ Уже активировано!`);
         return;
     }
     
     p.status = 'completed';
-    console.log(`✅ АДМИН @${adminUsername} подтвердил оплату ${paymentId} для ${p.nickname}`);
     
-    // Сообщение для покупателя
     const buyerMessage = 
         `✅ **ПЛАТЁЖ УСПЕШНО ПОДТВЕРЖДЁН!**\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━\n` +
         `🎁 **Привилегия *${p.privilege}***\n` +
         `👤 **Игрок:** *${p.nickname}*\n` +
         `💰 **Сумма:** ${p.rubPrice} ₽\n\n` +
         `⏳ **Донат будет выдан в течении дня!**\n\n` +
-        `✨ Обычно это занимает **15-30 минут**.\n\n` +
         `❓ **Вопросы?** Напишите: @gokot\n\n` +
         `🎮 **Сервер:** \`mc.sunyworld.me\`\n\n` +
-        `❤️ **Спасибо за поддержку SunyWorld!**`;
+        `❤️ **Спасибо за поддержку!**`;
     
     try {
         await bot.sendMessage(p.chatId, buyerMessage, { parse_mode: 'Markdown' });
-        console.log(`✅ Сообщение отправлено покупателю ${p.nickname}`);
-        bot.sendMessage(adminChatId, `✅ Сообщение отправлено покупателю ${p.nickname}!`);
+        bot.sendMessage(adminChatId, `✅ Сообщение отправлено ${p.nickname}!`);
     } catch (err) {
-        console.log(`❌ Ошибка при отправке покупателю: ${err.message}`);
-        bot.sendMessage(adminChatId, `⚠️ Не удалось отправить сообщение покупателю!`);
+        bot.sendMessage(adminChatId, `⚠️ Ошибка при отправке!`);
     }
-    
-    bot.sendMessage(adminChatId,
-        `✅ **Привилегия подтверждена!**\n\n` +
-        `👤 Игрок: ${p.nickname}\n` +
-        `🎁 Привилегия: ${p.privilege}\n` +
-        `💰 Сумма: ${p.rubPrice} ₽\n` +
-        `🆔 Код: ${paymentId}`,
-        { parse_mode: 'Markdown' }
-    );
 });
 
 // ОТМЕНА ЗАКАЗА
@@ -262,7 +351,7 @@ bot.onText(/\/cancel (\S+)/, async (msg, match) => {
     }
     
     if (p.status === 'completed') {
-        bot.sendMessage(msg.chat.id, '⚠️ Привилегия уже активирована, отмена невозможна!');
+        bot.sendMessage(msg.chat.id, '⚠️ Уже активировано!');
         return;
     }
     
@@ -270,8 +359,8 @@ bot.onText(/\/cancel (\S+)/, async (msg, match) => {
         await bot.sendMessage(p.chatId,
             `❌ **ЗАКАЗ ОТМЕНЁН**\n\n` +
             `😞 Заказ на *${p.privilege}* для *${p.nickname}* отменён.\n\n` +
-            `📢 Вопросы: [@gokot](https://t.me/gokot)`,
-            { parse_mode: 'Markdown', disable_web_page_preview: true }
+            `📢 Вопросы: @gokot`,
+            { parse_mode: 'Markdown' }
         );
     } catch (err) {}
     
@@ -315,17 +404,14 @@ bot.onText(/\/stats/, async (msg) => {
     
     const total = Object.keys(payments).length;
     const completed = Object.values(payments).filter(p => p.status === 'completed').length;
-    const pending = total - completed;
     let totalRub = 0;
     Object.values(payments).forEach(p => { if (p.status === 'completed') totalRub += p.rubPrice; });
     
     bot.sendMessage(msg.chat.id,
-        `📊 **СТАТИСТИКА МАГАЗИНА**\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━\n` +
-        `📦 Всего заказов: **${total}**\n` +
-        `✅ Выполнено: **${completed}**\n` +
-        `⏳ В обработке: **${pending}**\n` +
-        `💰 Всего собрано: **${totalRub} ₽**`,
+        `📊 **СТАТИСТИКА**\n\n` +
+        `📦 Заказов: ${total}\n` +
+        `✅ Выполнено: ${completed}\n` +
+        `💰 Собрано: ${totalRub} ₽`,
         { parse_mode: 'Markdown' }
     );
 });
@@ -334,24 +420,14 @@ bot.onText(/\/stats/, async (msg) => {
 bot.onText(/\/shop/, (msg) => {
     const text = 
         `🛒 **МАГАЗИН SUNYWORLD**\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━\n` +
-        `🦄 **PEGAS** — 50₽\n` +
-        `   Минимальная привилегия\n\n` +
-        `👑 **GOD** — 100₽\n` +
-        `   /fly, /heal\n\n` +
-        `🛡️ **MODER** — 350₽\n` +
-        `   /fly, /heal, /kit\n\n` +
-        `🤖 **ML.MODER** — 400₽\n` +
-        `   Улучшенный набор модератора\n\n` +
-        `👹 **MONSTER** — 500₽\n` +
-        `   /fly, /heal, особый набор\n\n` +
-        `⚡ **ADMIN** — 600₽\n` +
-        `   /vanish, /god, полный доступ\n\n` +
-        `🐣 **PASXA** — 700₽\n` +
-        `   Все возможности + уникальный префикс\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━\n` +
-        `📝 **Купить:** /buy [привилегия] [ник]\n` +
-        `Пример: /buy MODER Gamer228`;
+        `🦄 **PEGAS** — 50₽ / 34⭐\n` +
+        `👑 **GOD** — 100₽ / 67⭐\n` +
+        `🛡️ **MODER** — 350₽ / 234⭐\n` +
+        `🤖 **ML.MODER** — 400₽ / 267⭐\n` +
+        `👹 **MONSTER** — 500₽ / 334⭐\n` +
+        `⚡ **ADMIN** — 600₽ / 400⭐\n` +
+        `🐣 **PASXA** — 700₽ / 467⭐\n\n` +
+        `📝 /buy [привилегия] [ник]`;
     
     bot.sendMessage(msg.chat.id, text, { parse_mode: 'Markdown' });
 });
@@ -359,27 +435,19 @@ bot.onText(/\/shop/, (msg) => {
 // /help
 bot.onText(/\/help/, (msg) => {
     bot.sendMessage(msg.chat.id,
-        `📖 **КОМАНДЫ БОТА**\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━\n` +
-        `👤 **Для всех:**\n` +
-        `• /start — Главное меню 🎮\n` +
-        `• /buy [прив] [ник] — Купить привилегию 💎\n` +
-        `• /check [код] — Проверить оплату 🔍\n` +
-        `• /shop — Список товаров 🛒\n` +
-        `• /help — Эта справка 📖\n\n` +
-        `👑 **Для администраторов:**\n` +
-        `• /approve [код] — Подтвердить оплату ✅\n` +
-        `• /cancel [код] — Отменить заказ ❌\n` +
-        `• /orders — Активные заказы 📋\n` +
-        `• /stats — Статистика 📊\n\n` +
-        `👑 **Администраторы:**\n` +
-        `• [@gokot](https://t.me/gokot)\n` +
-        `• [@Pullpy](https://t.me/Pullpy)`,
-        { parse_mode: 'Markdown', disable_web_page_preview: true }
+        `📖 **КОМАНДЫ**\n\n` +
+        `/start — Меню\n` +
+        `/buy [прив] [ник] — Купить\n` +
+        `/check [код] — Проверить оплату\n` +
+        `/shop — Цены\n` +
+        `/help — Помощь\n\n` +
+        `👑 Админы: @gokot, @Pullpy`,
+        { parse_mode: 'Markdown' }
     );
 });
 
-console.log('✅ БОТ SUNYWORLD ЗАПУЩЕН!');
-console.log(`👑 Администраторы: @${ADMINS.join(', @')}`);
-console.log('');
-console.log(`💰 ПРИВИЛЕГИИ: PEGAS 50₽, GOD 100₽, MODER 350₽, ML.MODER 400₽, MONSTER 500₽, ADMIN 600₽, PASXA 700₽`);
+console.log('✅ БОТ ЗАПУЩЕН!');
+console.log(`💰 Цены в рублях и Stars:`);
+for (const [name, price] of Object.entries(PRICES)) {
+    console.log(`   ${name}: ${price.rub}₽ / ${price.stars}⭐`);
+}
