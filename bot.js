@@ -7,12 +7,15 @@ const ADMINS = ['gokot', 'Pullpy'];
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
-// НОВЫЕ ПРИВИЛЕГИИ (старые удалены)
+// ПРИВИЛЕГИИ (ОТСОРТИРОВАНЫ ПО ВОЗРАСТАНИЮ ЦЕНЫ)
 const PRICES = { 
-    'MODER': 350, 
-    'ADMIN': 600, 
-    'MONSTER': 500, 
-    'PASXA': 700 
+    'PEGAS': 50,
+    'GOD': 100,
+    'MODER': 350,
+    'ML.MODER': 400,
+    'MONSTER': 500,
+    'ADMIN': 600,
+    'PASXA': 700
 };
 
 const payments = {};
@@ -68,10 +71,13 @@ bot.onText(/\/start/, (msg) => {
     
     bot.sendMessage(chatId,
         `🎮 **Добро пожаловать в магазин SunyWorld!**\n\n` +
-        `💰 **ПРИВИЛЕГИИ:**\n` +
+        `💰 **ПРИВИЛЕГИИ (по возрастанию цены):**\n` +
+        `• 🦄 PEGAS — 50₽\n` +
+        `• 👑 GOD — 100₽\n` +
         `• 🛡️ MODER — 350₽\n` +
-        `• 👑 ADMIN — 600₽\n` +
+        `• 🤖 ML.MODER — 400₽\n` +
         `• 👹 MONSTER — 500₽\n` +
+        `• ⚡ ADMIN — 600₽\n` +
         `• 🐣 PASXA — 700₽\n\n` +
         `📝 **Как купить:**\n` +
         `/buy [привилегия] [ник]\n` +
@@ -86,11 +92,16 @@ bot.onText(/\/start/, (msg) => {
 // ПОКУПКА
 bot.onText(/\/buy (\S+) (\S+)/, async (msg, match) => {
     const chatId = msg.chat.id;
-    const privilege = match[1].toUpperCase();
+    let privilege = match[1].toUpperCase();
     const nickname = match[2];
     
+    // Поддержка написания ML.MODER с точкой
+    if (privilege === 'ML.MODER' || privilege === 'MLMODER') {
+        privilege = 'ML.MODER';
+    }
+    
     if (!PRICES[privilege]) {
-        bot.sendMessage(chatId, '❌ Нет такой привилегии! Доступно: MODER, ADMIN, MONSTER, PASXA');
+        bot.sendMessage(chatId, '❌ Нет такой привилегии! Доступно: PEGAS, GOD, MODER, ML.MODER, MONSTER, ADMIN, PASXA');
         return;
     }
     
@@ -324,12 +335,18 @@ bot.onText(/\/shop/, (msg) => {
     const text = 
         `🛒 **МАГАЗИН SUNYWORLD**\n\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
+        `🦄 **PEGAS** — 50₽\n` +
+        `   Минимальная привилегия\n\n` +
+        `👑 **GOD** — 100₽\n` +
+        `   /fly, /heal\n\n` +
         `🛡️ **MODER** — 350₽\n` +
         `   /fly, /heal, /kit\n\n` +
-        `👑 **ADMIN** — 600₽\n` +
-        `   /vanish, /god, полный доступ\n\n` +
+        `🤖 **ML.MODER** — 400₽\n` +
+        `   Улучшенный набор модератора\n\n` +
         `👹 **MONSTER** — 500₽\n` +
         `   /fly, /heal, особый набор\n\n` +
+        `⚡ **ADMIN** — 600₽\n` +
+        `   /vanish, /god, полный доступ\n\n` +
         `🐣 **PASXA** — 700₽\n` +
         `   Все возможности + уникальный префикс\n\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
@@ -365,4 +382,5 @@ bot.onText(/\/help/, (msg) => {
 console.log('✅ БОТ SUNYWORLD ЗАПУЩЕН!');
 console.log(`👑 Администраторы: @${ADMINS.join(', @')}`);
 console.log('');
-console.log(`💰 НОВЫЕ ЦЕНЫ: MODER 350₽, ADMIN 600₽, MONSTER 500₽, PASXA 700₽`);
+console.log(`💰 ПРИВИЛЕГИИ (по возрастанию цены):`);
+console.log(`   PEGAS 50₽, GOD 100₽, MODER 350₽, ML.MODER 400₽, MONSTER 500₽, ADMIN 600₽, PASXA 700₽`);
