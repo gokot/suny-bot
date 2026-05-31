@@ -7,7 +7,7 @@ const ADMINS = ['gokot', 'Pullpy'];
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
-// ПРИВИЛЕГИИ (ОБНОВЛЕНЫ)
+// ПРИВИЛЕГИИ (ТОЧНО КАК НА КАРТИНКЕ)
 const PRICES = { 
     'BULLET': 9,
     'BUNNY': 19,
@@ -21,7 +21,7 @@ const PRICES = {
     'D.ADMIN': 700
 };
 
-// КЕЙСЫ (НЕ ИЗМЕНЕНЫ)
+// КЕЙСЫ
 const CASES = {
     '3 КЕЙСА': 89,
     '10 КЕЙСОВ': 199,
@@ -72,42 +72,42 @@ async function showMainMenu(chatId) {
     );
 }
 
-// Функция показа привилегий (ОБНОВЛЕНА)
+// Функция показа привилегий (НАЗВАНИЯ КАК НА КАРТИНКЕ)
 async function showPrivileges(chatId) {
     const keyboard = {
         inline_keyboard: [
-            [{ text: '🔫 BULLET 9₽', callback_data: 'buy_BULLET' }],
-            [{ text: '🐰 BUNNY 19₽', callback_data: 'buy_BUNNY' }],
-            [{ text: '🐯 TIGER 29₽', callback_data: 'buy_TIGER' }],
-            [{ text: '💧 HYDRATE 39₽', callback_data: 'buy_HYDRATE' }],
-            [{ text: '🐍 COBRA 49₽', callback_data: 'buy_COBRA' }],
-            [{ text: '👑 GOD 100₽', callback_data: 'buy_GOD' }],
-            [{ text: '🦄 PEGASUS 150₽', callback_data: 'buy_PEGASUS' }],
-            [{ text: '👹 MONSTER 500₽', callback_data: 'buy_MONSTER' }],
-            [{ text: '🔥 PASSA 600₽', callback_data: 'buy_PASSA' }],
-            [{ text: '⚡ D.ADMIN 700₽', callback_data: 'buy_D.ADMIN' }],
+            [{ text: 'BULLET 9₽', callback_data: 'buy_BULLET' }],
+            [{ text: 'BUNNY 19₽', callback_data: 'buy_BUNNY' }],
+            [{ text: 'TIGER 29₽', callback_data: 'buy_TIGER' }],
+            [{ text: 'HYDRATE 39₽', callback_data: 'buy_HYDRATE' }],
+            [{ text: 'COBRA 49₽', callback_data: 'buy_COBRA' }],
+            [{ text: 'GOD 100₽', callback_data: 'buy_GOD' }],
+            [{ text: 'PEGASUS 150₽', callback_data: 'buy_PEGASUS' }],
+            [{ text: 'MONSTER 500₽', callback_data: 'buy_MONSTER' }],
+            [{ text: 'PASSA 600₽', callback_data: 'buy_PASSA' }],
+            [{ text: 'D.ADMIN 700₽', callback_data: 'buy_D.ADMIN' }],
             [{ text: '◀️ НАЗАД В МЕНЮ', callback_data: 'menu_back' }]
         ]
     };
     
     await bot.sendMessage(chatId,
         `🛡️ **ПРИВИЛЕГИИ**\n\n` +
-        `• 🔫 BULLET — 9₽\n` +
-        `• 🐰 BUNNY — 19₽\n` +
-        `• 🐯 TIGER — 29₽\n` +
-        `• 💧 HYDRATE — 39₽\n` +
-        `• 🐍 COBRA — 49₽\n` +
-        `• 👑 GOD — 100₽\n` +
-        `• 🦄 PEGASUS — 150₽\n` +
-        `• 👹 MONSTER — 500₽\n` +
-        `• 🔥 PASSA — 600₽\n` +
-        `• ⚡ D.ADMIN — 700₽\n\n` +
+        `• BULLET — 9₽\n` +
+        `• BUNNY — 19₽\n` +
+        `• TIGER — 29₽\n` +
+        `• HYDRATE — 39₽\n` +
+        `• COBRA — 49₽\n` +
+        `• GOD — 100₽\n` +
+        `• PEGASUS — 150₽\n` +
+        `• MONSTER — 500₽\n` +
+        `• PASSA — 600₽\n` +
+        `• D.ADMIN — 700₽\n\n` +
         `Нажмите на привилегию для покупки:`,
         { parse_mode: 'Markdown', reply_markup: keyboard }
     );
 }
 
-// Функция показа кейсов (НЕ ИЗМЕНЕНА)
+// Функция показа кейсов
 async function showCases(chatId) {
     const keyboard = {
         inline_keyboard: [
@@ -162,10 +162,8 @@ bot.on('callback_query', async (query) => {
     // Покупка привилегии
     else if (data.startsWith('buy_')) {
         const privilege = data.replace('buy_', '');
-        // Запрашиваем никнейм
         bot.sendMessage(chatId, `💎 Вы выбрали привилегию *${privilege}*\n\nВведите никнейм игрока:`, { parse_mode: 'Markdown' });
         
-        // Сохраняем временные данные
         adminChatIds[`temp_${chatId}`] = { type: 'privilege', item: privilege };
     }
     
@@ -174,7 +172,6 @@ bot.on('callback_query', async (query) => {
         const caseName = data.replace('case_', '');
         bot.sendMessage(chatId, `🎁 Вы выбрали *${caseName}*\n\nВведите никнейм игрока:`, { parse_mode: 'Markdown' });
         
-        // Сохраняем временные данные
         adminChatIds[`temp_${chatId}`] = { type: 'case', item: caseName };
     }
     
