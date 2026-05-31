@@ -7,17 +7,17 @@ const ADMINS = ['gokot', 'Pullpy'];
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
-// ПРИВИЛЕГИИ (ТОЧНО КАК НА КАРТИНКЕ)
+// ПРИВИЛЕГИИ (ТОЧНО ПО ЗАПРОСУ)
 const PRICES = { 
-    'BULLET': 9,
+    'BULL': 9,
     'BUNNY': 19,
     'TIGER': 29,
-    'HYDRATE': 39,
+    'HYDRA': 39,
     'COBRA': 49,
     'GOD': 100,
-    'PEGASUS': 150,
+    'PEGAS': 150,
     'MONSTER': 500,
-    'PASSA': 600,
+    'PASXA': 600,
     'D.ADMIN': 700
 };
 
@@ -72,19 +72,19 @@ async function showMainMenu(chatId) {
     );
 }
 
-// Функция показа привилегий (НАЗВАНИЯ КАК НА КАРТИНКЕ)
+// Функция показа привилегий
 async function showPrivileges(chatId) {
     const keyboard = {
         inline_keyboard: [
-            [{ text: 'BULLET 9₽', callback_data: 'buy_BULLET' }],
+            [{ text: 'BULL 9₽', callback_data: 'buy_BULL' }],
             [{ text: 'BUNNY 19₽', callback_data: 'buy_BUNNY' }],
             [{ text: 'TIGER 29₽', callback_data: 'buy_TIGER' }],
-            [{ text: 'HYDRATE 39₽', callback_data: 'buy_HYDRATE' }],
+            [{ text: 'HYDRA 39₽', callback_data: 'buy_HYDRA' }],
             [{ text: 'COBRA 49₽', callback_data: 'buy_COBRA' }],
             [{ text: 'GOD 100₽', callback_data: 'buy_GOD' }],
-            [{ text: 'PEGASUS 150₽', callback_data: 'buy_PEGASUS' }],
+            [{ text: 'PEGAS 150₽', callback_data: 'buy_PEGAS' }],
             [{ text: 'MONSTER 500₽', callback_data: 'buy_MONSTER' }],
-            [{ text: 'PASSA 600₽', callback_data: 'buy_PASSA' }],
+            [{ text: 'PASXA 600₽', callback_data: 'buy_PASXA' }],
             [{ text: 'D.ADMIN 700₽', callback_data: 'buy_D.ADMIN' }],
             [{ text: '◀️ НАЗАД В МЕНЮ', callback_data: 'menu_back' }]
         ]
@@ -92,15 +92,15 @@ async function showPrivileges(chatId) {
     
     await bot.sendMessage(chatId,
         `🛡️ **ПРИВИЛЕГИИ**\n\n` +
-        `• BULLET — 9₽\n` +
+        `• BULL — 9₽\n` +
         `• BUNNY — 19₽\n` +
         `• TIGER — 29₽\n` +
-        `• HYDRATE — 39₽\n` +
+        `• HYDRA — 39₽\n` +
         `• COBRA — 49₽\n` +
         `• GOD — 100₽\n` +
-        `• PEGASUS — 150₽\n` +
+        `• PEGAS — 150₽\n` +
         `• MONSTER — 500₽\n` +
-        `• PASSA — 600₽\n` +
+        `• PASXA — 600₽\n` +
         `• D.ADMIN — 700₽\n\n` +
         `Нажмите на привилегию для покупки:`,
         { parse_mode: 'Markdown', reply_markup: keyboard }
@@ -481,5 +481,5 @@ bot.onText(/\/help/, (msg) => {
 console.log('✅ БОТ SUNYWORLD ЗАПУЩЕН!');
 console.log(`👑 Администраторы: @${ADMINS.join(', @')}`);
 console.log('');
-console.log(`💰 ПРИВИЛЕГИИ: BULLET 9₽, BUNNY 19₽, TIGER 29₽, HYDRATE 39₽, COBRA 49₽, GOD 100₽, PEGASUS 150₽, MONSTER 500₽, PASSA 600₽, D.ADMIN 700₽`);
+console.log(`💰 ПРИВИЛЕГИИ: BULL 9₽, BUNNY 19₽, TIGER 29₽, HYDRA 39₽, COBRA 49₽, GOD 100₽, PEGAS 150₽, MONSTER 500₽, PASXA 600₽, D.ADMIN 700₽`);
 console.log(`🎁 КЕЙСЫ: 3 кейса 89₽, 10 кейсов 199₽, 25 кейсов 299₽`);
