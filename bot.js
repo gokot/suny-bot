@@ -9,7 +9,7 @@ const {
   getUserPurchases
 } = require('./database');
 
-const token = process.env.BOT_TOKEN;8792137358:AAHMO9wKGVKvXgYsqOz5cSN43xdSpUzrknk
+const token = process.env.BOT_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
 
 // ============ КОНФИГУРАЦИЯ НАБОРОВ ============
@@ -118,7 +118,6 @@ function getBackKeyboard() {
 
 // ============ ХЕНДЛЕРЫ КОМАНД ============
 
-// /start
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   getUser(chatId, (err, user) => {
@@ -137,7 +136,6 @@ bot.onText(/\/start/, (msg) => {
   });
 });
 
-// Кнопка "Магазин"
 bot.onText(/🛒 Магазин/, (msg) => {
   const chatId = msg.chat.id;
   let text = '🛒 **Магазин Kit-наборов**\n\n';
@@ -156,7 +154,6 @@ bot.onText(/🛒 Магазин/, (msg) => {
   bot.sendMessage(chatId, text, { parse_mode: 'Markdown', ...getShopKeyboard() });
 });
 
-// Кнопка "Пополнить Stars"
 bot.onText(/⭐ Пополнить Stars/, (msg) => {
   const chatId = msg.chat.id;
   bot.sendMessage(
@@ -166,7 +163,6 @@ bot.onText(/⭐ Пополнить Stars/, (msg) => {
   );
 });
 
-// Кнопка "Мой профиль"
 bot.onText(/👤 Мой профиль/, (msg) => {
   const chatId = msg.chat.id;
   getUser(chatId, (err, user) => {
@@ -190,7 +186,6 @@ bot.onText(/👤 Мой профиль/, (msg) => {
   });
 });
 
-// Кнопка "Мои покупки"
 bot.onText(/📦 Мои покупки/, (msg) => {
   const chatId = msg.chat.id;
   getUser(chatId, (err, user) => {
@@ -215,7 +210,6 @@ bot.onText(/📦 Мои покупки/, (msg) => {
         text += `   ${kit.description}\n\n`;
       }
     });
-    // Если хотите добавить кнопку "Скачать все"
     const keyboard = {
       reply_markup: {
         inline_keyboard: [
@@ -230,7 +224,6 @@ bot.onText(/📦 Мои покупки/, (msg) => {
 
 // ============ ОБРАБОТЧИКИ INLINE КНОПОК ============
 
-// Назад в меню
 bot.on('callback_query', (query) => {
   const chatId = query.message.chat.id;
   const data = query.data;
@@ -255,21 +248,18 @@ bot.on('callback_query', (query) => {
     return;
   }
   
-  // Покупка Stars
   if (data.startsWith('stars_')) {
     const amount = parseInt(data.split('_')[1]);
     handleStarsPurchase(query, amount);
     return;
   }
   
-  // Покупка набора
   if (data.startsWith('buy_')) {
     const productId = data.replace('buy_', '');
     handleKitPurchase(query, productId);
     return;
   }
   
-  // Скачать все
   if (data === 'download_all') {
     handleDownloadAll(query);
     return;
@@ -286,13 +276,12 @@ bot.on('callback_query', (query) => {
 function handleStarsPurchase(query, amount) {
   const chatId = query.message.chat.id;
   
-  // Формируем счет для оплаты Stars
   const invoice = {
     chat_id: chatId,
     title: `Пополнение на ${amount} Stars`,
     description: `Покупка ${amount} Stars для магазина Kit-наборов`,
     payload: `stars_${amount}_${chatId}`,
-    provider_token: '', // Для Stars оставляем пустым
+    provider_token: '',
     currency: 'XTR',
     prices: [{ label: `${amount} Stars`, amount: amount * 100 }],
     start_parameter: 'stars_payment'
@@ -305,7 +294,6 @@ function handleStarsPurchase(query, amount) {
 function handleKitPurchase(query, productId) {
   const chatId = query.message.chat.id;
   
-  // Определяем тип товара
   let product = null;
   let productType = '';
   
@@ -322,14 +310,12 @@ function handleKitPurchase(query, productId) {
   
   const price = product.price;
   
-  // Проверяем пользователя
   getUser(chatId, (err, user) => {
     if (err) {
       bot.sendMessage(chatId, '❌ Ошибка базы данных');
       return;
     }
     
-    // Проверяем, куплен ли уже набор
     if (productType === 'kit') {
       const purchased = JSON.parse(user.purchased_kits);
       if (purchased.includes(productId)) {
@@ -343,7 +329,6 @@ function handleKitPurchase(query, productId) {
       }
     }
     
-    // Проверяем баланс
     if (user.stars_balance < price) {
       bot.answerCallbackQuery(query.id, { text: '❌ Недостаточно Stars!' });
       bot.sendMessage(
@@ -354,14 +339,12 @@ function handleKitPurchase(query, productId) {
       return;
     }
     
-    // Списание Stars
     updateBalance(chatId, -price, (err) => {
       if (err) {
         bot.sendMessage(chatId, '❌ Ошибка при списании средств');
         return;
       }
       
-      // Выдача товара
       if (productType === 'kit') {
         addKitToUser(chatId, productId, (err) => {
           if (err) {
@@ -378,7 +361,6 @@ function handleKitPurchase(query, productId) {
           );
         });
       } else if (productType === 'combo') {
-        // Добавляем все наборы из комбо
         let completed = 0;
         product.kits.forEach((kitId) => {
           addKitToUser(chatId, kitId, (err) => {
@@ -420,8 +402,15 @@ function handleDownloadAll(query) {
       return;
     }
     
-    // Здесь логика отправки файлов
-    // Пример: отправка сообщения со ссылкой
+    // ЗДЕСЬ ВАМ НУЖНО ДОБАВИТЬ ОТПРАВКУ ФАЙЛОВ
+    // Пример:
+    // for (const kitId of purchased) {
+    //   const files = KIT_FILES[kitId] || [];
+    //   for (const fileId of files) {
+    //     await bot.sendDocument(chatId, fileId);
+    //   }
+    // }
+    
     bot.sendMessage(
       chatId,
       '📂 **Ваши наборы готовы к скачиванию!**\n\n' +
@@ -435,18 +424,15 @@ function handleDownloadAll(query) {
 
 // ============ ОБРАБОТКА ПЛАТЕЖЕЙ ============
 
-// Pre-checkout (проверка перед оплатой)
 bot.on('pre_checkout_query', (query) => {
   bot.answerPreCheckoutQuery(query.id, true);
 });
 
-// Успешная оплата
 bot.on('successful_payment', (msg) => {
   const chatId = msg.chat.id;
   const payment = msg.successful_payment;
   const payload = payment.invoice_payload;
   
-  // Разбор payload: stars_100_123456789
   const parts = payload.split('_');
   const amountStars = parseInt(parts[1]);
   const userId = parseInt(parts[2]);
@@ -472,12 +458,13 @@ bot.on('successful_payment', (msg) => {
   }
 });
 
-// ============ АДМИН-КОМАНДЫ ============
+// ============ АДМИН-КОМАНДА ============
 
 bot.onText(/\/admin/, (msg) => {
   const chatId = msg.chat.id;
-  const adminId = process.env.ADMIN_ID;
   
+  // Если хотите ограничить доступ — укажите свой ID в .env
+  const adminId = process.env.ADMIN_ID;
   if (adminId && parseInt(adminId) !== chatId) {
     bot.sendMessage(chatId, '⛔ Доступ запрещен');
     return;
