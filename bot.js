@@ -9,6 +9,7 @@ const {
   getUserPurchases
 } = require('./database');
 
+// Токен забирается из файла .env — ЭТО ПРАВИЛЬНО
 const token = process.env.BOT_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
 
@@ -403,14 +404,6 @@ function handleDownloadAll(query) {
     }
     
     // ЗДЕСЬ ВАМ НУЖНО ДОБАВИТЬ ОТПРАВКУ ФАЙЛОВ
-    // Пример:
-    // for (const kitId of purchased) {
-    //   const files = KIT_FILES[kitId] || [];
-    //   for (const fileId of files) {
-    //     await bot.sendDocument(chatId, fileId);
-    //   }
-    // }
-    
     bot.sendMessage(
       chatId,
       '📂 **Ваши наборы готовы к скачиванию!**\n\n' +
@@ -463,7 +456,6 @@ bot.on('successful_payment', (msg) => {
 bot.onText(/\/admin/, (msg) => {
   const chatId = msg.chat.id;
   
-  // Если хотите ограничить доступ — укажите свой ID в .env
   const adminId = process.env.ADMIN_ID;
   if (adminId && parseInt(adminId) !== chatId) {
     bot.sendMessage(chatId, '⛔ Доступ запрещен');
